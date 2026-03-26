@@ -1,6 +1,9 @@
 # Task Manager API
 
 Управление списком задач на FastAPI + SQLAlchemy + SQLite.
+## Требования
+
+Python 3.11+ и установленный uv.
 
 ## Запуск
 
