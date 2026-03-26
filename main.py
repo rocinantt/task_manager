@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-import models
 from database import Base, engine
+import models 
 from routers.tasks import router as tasks_router
 from routers.users import router as users_router
 
@@ -15,11 +15,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Task Manager API", lifespan=lifespan)
-
-
-@app.get("/")
-def read_root():
-    return {"message": "Task Manager API is running"}
 
 
 app.include_router(tasks_router)
