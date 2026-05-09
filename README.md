@@ -118,7 +118,9 @@ uv run pytest --cov --cov-report=term-missing
 
 #### Результат тестов
 
-HTML-отчёт покрытия: `htmlcov/index.html`
+Результат: 48 тестов, покрытие 99%.
+
+HTML-отчёт покрытия: [htmlcov/index.html](htmlcov/index.html)
 
 ## Нагрузочное тестирование
 
@@ -160,4 +162,6 @@ uv run locust -f locustfile.py \
   --html locust-report.html
   ``` 
 
-  HTML-отчёт Locust: `locust-report.html`
+### Результаты нагрузочного тестирования
+
+HTML-отчёт Locust: [locust-report.html](locust-report.html)
