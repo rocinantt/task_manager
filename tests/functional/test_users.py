@@ -65,3 +65,5 @@ def test_protected_endpoint_with_invalid_token_returtns_401(client):
 
     response = client.get("/tasks/", headers={"Authorization": "Bearer ........"})
     assert response.status_code == 401
+
+
