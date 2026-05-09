@@ -1,0 +1,13 @@
+[run]
+source =
+    auth
+    database
+    main
+    models
+    schemas
+    routers
+omit =
+    tests/*
+    .venv/*
+    venv/*
+    locustfile.py
