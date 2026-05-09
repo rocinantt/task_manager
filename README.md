@@ -120,7 +120,12 @@ uv run pytest --cov --cov-report=term-missing
 
 Результат: 48 тестов, покрытие 99%.
 
-HTML-отчёт покрытия: [htmlcov/index.html](htmlcov/index.html)
+HTML-отчёт покрытия доступен двумя способами:
+
+- папка отчёта: [`htmlcov/`](htmlcov/)
+- архив отчёта для скачивания: [`htmlcov.zip`](htmlcov.zip)
+
+После распаковки архива открыть `htmlcov/index.html`
 
 ## Нагрузочное тестирование
 
