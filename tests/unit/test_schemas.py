@@ -13,7 +13,7 @@ def test_task_create_with_minimal_fields():
 
 
 @pytest.mark.parametrize("priority", [1, 2, 3, 4, 5])
-def test_task_create_accepts_valid_priopity(priority):
+def test_task_create_accepts_valid_priority(priority):
     # Проверка корректности создания задачи с валидным уровнем приоритета (1-5)
     task = TaskCreate(title="test", priority=priority)
 
@@ -21,7 +21,7 @@ def test_task_create_accepts_valid_priopity(priority):
 
 
 @pytest.mark.parametrize("priority", [0, -1, 6, 100])
-def test_task_create_rejects_invalid_priopity(priority):
+def test_task_create_rejects_invalid_priority(priority):
     # Проверка некорректности создания задачи с невалидным уровнем приоритета 
     with pytest.raises(ValidationError):
         TaskCreate(title="test", priority=priority)
