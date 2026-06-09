@@ -6,13 +6,13 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px;
+      max-width: 640px;
       margin: 40px auto;
       padding: 0 16px;
       background: #f5f5f5;
       color: #222;
     }
-    h1 { text-align: center; }
+    h1, h2 { text-align: center; }
     .box {
       background: #fff;
       border: 1px solid #ddd;
@@ -20,12 +20,12 @@
       padding: 20px;
       margin-bottom: 16px;
     }
-    input, button {
+    input, select, button {
       padding: 8px;
       font-size: 14px;
       margin: 4px 0;
     }
-    input { width: 100%; box-sizing: border-box; }
+    input, select { width: 100%; box-sizing: border-box; }
     button { cursor: pointer; }
     .btn {
       background: #4f46e5;
@@ -46,6 +46,7 @@
     .done { text-decoration: line-through; color: #999; }
     .hidden { display: none; }
     #message { color: red; min-height: 18px; }
+    .toolbar { display: flex; gap: 8px; }
   </style>
 </head>
 <body>
@@ -63,37 +64,65 @@
 
   <!-- Блок задач (скрыт, пока не вошли) -->
   <div class="box hidden" id="taskBox">
-    <input id="newTask" placeholder="Новая задача">
-    <button class="btn" onclick="createTask()">Добавить</button>
+
+    <!-- Единая форма: создание ИЛИ редактирование -->
+    <h2 id="formTitle">Новая задача</h2>
+    <input id="fTitle" placeholder="Заголовок">
+    <input id="fDesc" placeholder="Описание">
+    <select id="fStatus">
+      <option value="в ожидании">в ожидании</option>
+      <option value="в работе">в работе</option>
+      <option value="завершено">завершено</option>
+    </select>
+    <select id="fPriority">
+      <option value="1">приоритет 1</option>
+      <option value="2">приоритет 2</option>
+      <option value="3">приоритет 3</option>
+      <option value="4">приоритет 4</option>
+      <option value="5">приоритет 5</option>
+    </select>
+    <button class="btn" onclick="saveTask()">Сохранить</button>
+    <button onclick="resetForm()">Отмена</button>
+
+    <hr>
+
+    <!-- Поиск и сортировка -->
+    <div class="toolbar">
+      <input id="search" placeholder="Поиск..." oninput="loadTasks()">
+      <select id="sort" onchange="loadTasks()">
+        <option value="created_at">по дате</option>
+        <option value="priority">по приоритету</option>
+        <option value="title">по названию</option>
+        <option value="status">по статусу</option>
+      </select>
+    </div>
+
     <div id="taskList"></div>
   </div>
 
   <script>
     let token = "";
+    let editId = "";   // пусто = создаём новую; id = редактируем эту
 
-    // Регистрация: отправляем JSON на /users/register
+    // --- Регистрация ---
     async function register() {
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
       const res = await fetch("/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username, password: password })
+        body: JSON.stringify({
+          username: document.getElementById("username").value,
+          password: document.getElementById("password").value
+        })
       });
-      if (res.ok) {
-        document.getElementById("message").textContent = "Готово! Теперь войдите.";
-      } else {
-        document.getElementById("message").textContent = "Ошибка регистрации";
-      }
+      document.getElementById("message").textContent =
+        res.ok ? "Готово! Теперь войдите." : "Ошибка регистрации";
     }
 
-    // Вход: логин идёт через форму, в ответ получаем токен
+    // --- Вход ---
     async function login() {
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
       const form = new URLSearchParams();
-      form.append("username", username);
-      form.append("password", password);
+      form.append("username", document.getElementById("username").value);
+      form.append("password", document.getElementById("password").value);
 
       const res = await fetch("/users/login", {
         method: "POST",
@@ -112,9 +141,18 @@
       }
     }
 
-    // Получить и показать список задач (Read)
+    // --- Показать список (с поиском или сортировкой) ---
     async function loadTasks() {
-      const res = await fetch("/tasks/", {
+      const search = document.getElementById("search").value;
+      const sort = document.getElementById("sort").value;
+
+      // если есть текст поиска - идём на /search, иначе на обычный список
+      let url = "/tasks/?sort_by=" + sort;
+      if (search) {
+        url = "/tasks/search?query=" + search;
+      }
+
+      const res = await fetch(url, {
         headers: { "Authorization": "Bearer " + token }
       });
       const tasks = await res.json();
@@ -125,58 +163,80 @@
         const div = document.createElement("div");
         div.className = "task";
 
-        const title = document.createElement("span");
-        title.textContent = task.title + " (приоритет " + task.priority + ")";
+        const text = document.createElement("span");
+        text.textContent = task.title + " — " + task.status + " (приоритет " + task.priority + ")";
         if (task.status === "завершено") {
-          title.className = "done";
+          text.className = "done";
         }
 
-        const buttons = document.createElement("div");
-        const doneBtn = document.createElement("button");
-        doneBtn.textContent = "✓";
-        doneBtn.onclick = () => completeTask(task.id);
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "изменить";
+        editBtn.onclick = () => startEdit(task);
+
         const delBtn = document.createElement("button");
-        delBtn.textContent = "✗";
+        delBtn.textContent = "удалить";
         delBtn.onclick = () => deleteTask(task.id);
-        buttons.appendChild(doneBtn);
+
+        const buttons = document.createElement("div");
+        buttons.appendChild(editBtn);
         buttons.appendChild(delBtn);
 
-        div.appendChild(title);
+        div.appendChild(text);
         div.appendChild(buttons);
         list.appendChild(div);
       }
     }
 
-    // Создать задачу (Create)
-    async function createTask() {
-      const title = document.getElementById("newTask").value;
-      if (!title) return;
-      await fetch("/tasks/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + token
-        },
-        body: JSON.stringify({ title: title })
+    // --- Сохранить: создать ИЛИ обновить (зависит от editId) ---
+    async function saveTask() {
+      const body = JSON.stringify({
+        title: document.getElementById("fTitle").value,
+        description: document.getElementById("fDesc").value,
+        status: document.getElementById("fStatus").value,
+        priority: parseInt(document.getElementById("fPriority").value)
       });
-      document.getElementById("newTask").value = "";
+
+      if (editId === "") {
+        // создание
+        await fetch("/tasks/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: body
+        });
+      } else {
+        // редактирование
+        await fetch("/tasks/" + editId, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: body
+        });
+      }
+
+      resetForm();
       loadTasks();
     }
 
-    // Отметить выполненной (Update — меняем статус)
-    async function completeTask(id) {
-      await fetch("/tasks/" + id, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + token
-        },
-        body: JSON.stringify({ status: "завершено" })
-      });
-      loadTasks();
+    // --- Заполнить форму данными задачи для редактирования ---
+    function startEdit(task) {
+      editId = task.id;
+      document.getElementById("formTitle").textContent = "Редактирование задачи #" + task.id;
+      document.getElementById("fTitle").value = task.title;
+      document.getElementById("fDesc").value = task.description;
+      document.getElementById("fStatus").value = task.status;
+      document.getElementById("fPriority").value = task.priority;
     }
 
-    // Удалить задачу (Delete)
+    // --- Очистить форму (вернуть в режим создания) ---
+    function resetForm() {
+      editId = "";
+      document.getElementById("formTitle").textContent = "Новая задача";
+      document.getElementById("fTitle").value = "";
+      document.getElementById("fDesc").value = "";
+      document.getElementById("fStatus").value = "в ожидании";
+      document.getElementById("fPriority").value = "1";
+    }
+
+    // --- Удалить задачу ---
     async function deleteTask(id) {
       await fetch("/tasks/" + id, {
         method: "DELETE",
