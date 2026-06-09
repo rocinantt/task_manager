@@ -7,17 +7,18 @@ requires-python = ">=3.11"
 dependencies = [
     "bcrypt==4.0.1",
     "fastapi>=0.135.2",
-    "locust>=2.43.4",
     "passlib[bcrypt]>=1.7.4",
     "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.22",
     "sqlalchemy>=2.0.48",
     "uvicorn[standard]>=0.42.0",
+    "pymysql>=1.1.1",
 ]
 
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "locust>=2.44.1",
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",

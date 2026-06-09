@@ -1,0 +1,43 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: task_manager
+      MYSQL_USER: taskuser
+      MYSQL_PASSWORD: taskpass
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 60s
+
+  web:
+    image: task-manager-web:latest
+    environment:
+      DATABASE_URL: "mysql+pymysql://taskuser:taskpass@db:3306/task_manager"
+      SECRET_KEY: "change-me-in-production"
+    ports:
+      - "8000:8000"
+    networks:
+      - app_net
+    depends_on:
+      - db
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 60s
+
+networks:
+  app_net:
+    driver: overlay
+
+volumes:
+  db_data:
